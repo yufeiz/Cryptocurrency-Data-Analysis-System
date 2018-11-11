@@ -35,7 +35,6 @@ def check_symbol(symbol):
     try:
         response = requests.get(API_BASE + '/products')
         product_ids = [product['id'] for product in response.json()]
-
         if symbol not in product_ids:
             logger.warn('symbol %s not supported. The list of supported symbols: %s', symbol, product_ids)
             exit()
@@ -44,6 +43,7 @@ def check_symbol(symbol):
         logger.warn('Failed to fetch products due to %s', e.message)
 
 def on_open(ws, symbol) :
+    logger.debug('On open.')
     sub_msg = {'type':'subscribe',
                 'product_ids':[str(symbol)],
                 'channels': ['ticker']}
@@ -108,6 +108,7 @@ if __name__ == '__main__':
     # Instantiate a simple kafka producer.
     producer = KafkaProducer(bootstrap_servers=kafka_broker)
 
+
     # Instantiate a websocket connection
     ws = websocket.WebSocketApp(WEBSOCKET_FEED, on_message=lambda ws, message: fetch_price(message, symbol, producer, topic_name),
                             on_open=lambda ws : on_open(ws, symbol))
@@ -115,7 +116,3 @@ if __name__ == '__main__':
 
     # Setup proper shutdown hook.
     atexit.register(shutdown_hook, producer, ws)
-
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
